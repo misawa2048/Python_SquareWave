@@ -60,63 +60,9 @@ def append_silence(duration_milliseconds=500):
 
     return
 
-def append_sinewave(
-        freq=1200.0, 
-        duration_milliseconds=500, 
-        volume=1.0):
-    """
-    The sine wave generated here is the standard beep.  If you want something
-    more aggresive you could try a square or saw tooth waveform.   Though there
-    are some rather complicated issues with making high quality square and
-    sawtooth waves... which we won't address here :) 
-    """ 
-
-    global audio # using global variables isn't cool.
-
-    num_samples = duration_milliseconds * (sample_rate / 1000.0)
-
-    for x in range(int(num_samples)):
-        audio.append(volume * math.sin(2 * math.pi * freq * ( x / sample_rate )))
-
-    return
-
-def append_topcut_sinewave(
-        freq=1200.0, 
-        duration_milliseconds=500, 
-        volume=1.0):
-
-    global audio # using global variables isn't cool.
-
-    num_samples = duration_milliseconds * (sample_rate / 1000.0)
-
-    for x in range(int(num_samples)):
-        val = 2 * volume * math.sin(2 * math.pi * freq * ( x / sample_rate ));
-        val = min(max(val,-volume),volume)
-        audio.append(val)
-
-    return
-
-def getFourierSin(_k, _t, _freq):
-    return math.sin((2*_k-1) * 2 * math.pi * _freq * (_t / sample_rate ))/(2*_k-1)
-
-def append_semiFourier(
-        freq=1200.0, 
-        duration_milliseconds=500, 
-        volume=1.0):
-        
-    num_samples = duration_milliseconds * (sample_rate / 1000.0)
-
-    for x in range(int(num_samples)): 
-        val = getFourierSin(1,x,freq)
-        val+= getFourierSin(2,x,freq)
-        val+= getFourierSin(3,x,freq)
-        audio.append(volume*val)
-
-    return
-
-
 
 def save_wav(file_name):
+    print("saving ",file_name)
     # Open up a wav file
     wav_file=wave.open(file_name,"w")
 
@@ -188,14 +134,13 @@ for data in bindata:
         break
 
 
-#append_semiFourier(volume=0.75)
-append_sinPulse(audio, 16000,1200,1200,0.5)
-append_silence()
-append_sinPulse(audio, 16000,2400,2400,0.5)
-append_silence()
-#append_sinewave(volume=0.75)
-#append_silence()
-
-bytes_to_tone(bindata, audio, 16000, 1200,0.75,1000)
+#http://ngs.no.coocan.jp/doc/wiki.cgi/TechHan?page=2%BE%CF+%A5%AB%A5%BB%A5%C3%A5%C8%8E%A5%A5%A4%A5%F3%A5%BF%A1%BC%A5%D5%A5%A7%A5%A4%A5%B9
+append_sinPulse(audio, 16000,2400,16000,0.5) # long header
+bytes_to_tone(b'\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3', audio, 16000, 1200,0.75,1000) #0xD3 x 10
+bytes_to_tone(b'myprog.cas', audio, 16000, 1200,0.75,1000) # filename
+append_silence(1700) # space
+append_sinPulse(audio, 16000,2400,4000,0.5) # short header
+bytes_to_tone(bindata, audio, 16000, 1200,0.75,10000) # data body
+append_sinPulse(audio, 16000,1200,7,0.5) # end of data
 
 save_wav("output2.wav")
