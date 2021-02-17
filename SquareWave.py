@@ -5,14 +5,49 @@
 import math
 import wave
 import struct
+import urllib.request
+from html.parser import HTMLParser
 
 # Audio will contain a long list of samples (i.e. floating point numbers describing the
 # waveform).  If you were working with a very long sound you'd want to stream this to
 # disk instead of buffering it all in memory list this.  But most sounds will fit in 
 # memory.
 audio = []
-sample_rate = 44100.0
+sample_rate = 16000.0
+#坊ちゃん
+#def_url = "https://www.aozora.gr.jp/cards/000148/files/752_14964.html"
+#Qiita記事
+#def_url = "https://qiita.com/hoto17296/items/8fcf55cc6cd823a18217"
+#The Wonderful Wizard of Oz
+def_url = "http://www.gutenberg.org/files/55/55.txt"
 
+#simple html
+#def_url = "https://elix.jp/ir/"
+
+def append_sinPulse(_audio, _sample_rate=16000, _pulse_hz=1200, _pulseNum=1, _volume=0.75):
+    per_samples = sample_rate / _pulse_hz
+    for x in range(int(_pulseNum * per_samples)):
+        val =  _volume * math.sin(2 * math.pi * ( x / per_samples ));
+        _audio.append(val)
+
+def bytes_to_tone(_data:bytes, _audio, _sample_rate=16000, _pulse_hz=1200, _volume=0.75, _max_bytes=100000):
+    if(_max_bytes<=0):
+        _max_bytes = len(_data)
+    else:
+        _max_bytes = min(_max_bytes,len(_data))
+        
+    for idx in range(_max_bytes):
+        bstr="0"
+        append_sinPulse(_audio, _sample_rate, _pulse_hz, 1, 0.75) # start bit 
+        for b in range(8):
+            onbit = ((_data[idx]>>b)&1)+1 # off=1,on=2
+            bstr += str(onbit-1)
+            append_sinPulse(_audio, _sample_rate, _pulse_hz*onbit, 1, 0.75) # data bit 
+
+        append_sinPulse(_audio, _sample_rate, _pulse_hz*2, 2, 0.75) # stop bit 
+        bstr += "11"
+        print(bstr)
+        
 
 def append_silence(duration_milliseconds=500):
     """
@@ -111,9 +146,56 @@ def save_wav(file_name):
     return
 
 
-append_semiFourier(volume=0.75)
+req = urllib.request.Request(def_url)
+with urllib.request.urlopen(req) as res:
+    body = res.read()
+print(res.status)
+
+
+class MyHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.planeText = ""
+
+    def handle_data(self, data):
+        self.planeText += data
+        print("Encountered some data  :", data)
+
+utf8str="?"
+try:
+    utf8str=body.decode('utf-8')
+except UnicodeDecodeError:
+    pass
+
+print("--------------------------------------------------------------------")
+print("utf8str=",utf8str)
+print("--------------------------------------------------------------------")
+parser = MyHTMLParser()
+parser.feed(utf8str)
+
+bindata = parser.planeText.encode()
+
+print (parser.planeText)
+print("--------------------------------------------------------------------")
+print (bindata)
+print("--------------------------------------------------------------------")
+
+datCnt=0
+for data in bindata:
+    print(data,)
+    datCnt+=1
+    if(datCnt>20):
+        break
+
+
+#append_semiFourier(volume=0.75)
+append_sinPulse(audio, 16000,1200,1200,0.5)
 append_silence()
-append_sinewave(volume=0.75)
+append_sinPulse(audio, 16000,2400,2400,0.5)
 append_silence()
-append_topcut_sinewave(volume=0.75)
+#append_sinewave(volume=0.75)
+#append_silence()
+
+bytes_to_tone(bindata, audio, 16000, 1200,0.75,1000)
+
 save_wav("output2.wav")
