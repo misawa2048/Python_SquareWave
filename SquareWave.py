@@ -14,6 +14,7 @@ from html.parser import HTMLParser
 # memory.
 audio = []
 sample_rate = 16000.0
+filename = "testprog" # filename.cas -> filename.wav
 #坊ちゃん
 #def_url = "https://www.aozora.gr.jp/cards/000148/files/752_14964.html"
 #Qiita記事
@@ -25,7 +26,7 @@ def_url = "http://www.gutenberg.org/files/55/55.txt"
 #def_url = "https://elix.jp/ir/"
 
 def append_sinPulse(_audio, _sample_rate=16000, _pulse_hz=1200, _pulseNum=1, _volume=0.75):
-    per_samples = sample_rate / _pulse_hz
+    per_samples = _sample_rate / _pulse_hz
     for x in range(int(_pulseNum * per_samples)):
         val =  _volume * math.sin(2 * math.pi * ( x / per_samples ));
         _audio.append(val)
@@ -49,14 +50,14 @@ def bytes_to_tone(_data:bytes, _audio, _sample_rate=16000, _pulse_hz=1200, _volu
         print(bstr)
         
 
-def append_silence(duration_milliseconds=500):
+def append_silence(_audio, _sample_rate=16000, duration_milliseconds=1000):
     """
     Adding silence is easy - we add zeros to the end of our array
     """
-    num_samples = duration_milliseconds * (sample_rate / 1000.0)
+    num_samples = duration_milliseconds * (_sample_rate / 1000.0)
 
     for x in range(int(num_samples)): 
-        audio.append(0.0)
+        _audio.append(0.0)
 
     return
 
@@ -68,7 +69,6 @@ def save_wav(file_name):
 
     # wav params
     nchannels = 1
-
     sampwidth = 2
 
     # 44100 is the industry standard sample rate - CD quality.  If you need to
@@ -135,12 +135,14 @@ for data in bindata:
 
 
 #http://ngs.no.coocan.jp/doc/wiki.cgi/TechHan?page=2%BE%CF+%A5%AB%A5%BB%A5%C3%A5%C8%8E%A5%A5%A4%A5%F3%A5%BF%A1%BC%A5%D5%A5%A7%A5%A4%A5%B9
-append_sinPulse(audio, 16000,2400,16000,0.5) # long header
-bytes_to_tone(b'\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3', audio, 16000, 1200,0.75,1000) #0xD3 x 10
-bytes_to_tone(b'myprog.cas', audio, 16000, 1200,0.75,1000) # filename
-append_silence(1700) # space
-append_sinPulse(audio, 16000,2400,4000,0.5) # short header
+append_sinPulse(audio, sample_rate,2400,16000,0.5) # long header
+bytes_to_tone(b'\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3', audio, sample_rate, 1200,0.75,1000) #0xD3 x 10
+bytes_to_tone( (filename+".cas").encode('utf-8'), audio, sample_rate, 1200,0.75,1000) # filename
+append_silence(audio,sample_rate,1700) # space
+append_sinPulse(audio, sample_rate,2400,4000,0.5) # short header
 bytes_to_tone(bindata, audio, 16000, 1200,0.75,10000) # data body
-append_sinPulse(audio, 16000,1200,7,0.5) # end of data
+append_sinPulse(audio, sample_rate,1200,7,0.5) # end of data
 
-save_wav("output2.wav")
+save_wav(filename+".wav")
+
+print("save complete.")
