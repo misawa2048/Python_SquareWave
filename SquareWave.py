@@ -41,21 +41,6 @@ def append_bytes_to_tone(_data:bytes, _audio, _sample_rate=16000, _pulse_hz=1200
 
     return _audio
 
-def debug_disp_bytes(_data:bytes, _audio, _sample_rate=16000, _pulse_hz=1200, _volume=0.5, _max_bytes=100000):
-    if(_max_bytes<=0):
-        _max_bytes = len(_data)
-    else:
-        _max_bytes = min(_max_bytes,len(_data))
-        
-    for idx in range(_max_bytes):
-        bstr="0"
-        for b in range(8):
-            onbit = ((_data[idx]>>b)&1)+1 # off=1,on=2
-            bstr += str(onbit-1)
-
-        bstr += "11"
-        print(bstr)
-
 def append_silence(_audio, _sample_rate=16000, duration_milliseconds=1000):
     """
     Adding silence is easy - we add zeros to the end of our array
@@ -135,6 +120,21 @@ def debug_disp_bindata(_bindata):
         datCnt+=1
         if(datCnt>20):
             break
+
+def debug_disp_bytes(_data:bytes, _audio, _sample_rate=16000, _pulse_hz=1200, _volume=0.5, _max_bytes=100000):
+    if(_max_bytes<=0):
+        _max_bytes = len(_data)
+    else:
+        _max_bytes = min(_max_bytes,len(_data))
+        
+    for idx in range(_max_bytes):
+        bstr="0"
+        for b in range(8):
+            onbit = ((_data[idx]>>b)&1)+1 # off=1,on=2
+            bstr += str(onbit-1)
+
+        bstr += "11"
+        print(bstr)
 
 def bin_to_wav(_bindata:bytes, _filename, _sample_rate, _volume):
     _audio = []
