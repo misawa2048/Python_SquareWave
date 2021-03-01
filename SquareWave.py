@@ -13,10 +13,10 @@ from html.parser import HTMLParser
 #Qiita記事
 #def_url = "https://qiita.com/hoto17296/items/8fcf55cc6cd823a18217"
 #The Wonderful Wizard of Oz
-#def_url = "http://www.gutenberg.org/files/55/55.txt"
+def_url = "http://www.gutenberg.org/files/55/55.txt"
 
 #simple html
-def_url = "https://elix-jp.sakura.ne.jp/api/usage.php"
+#def_url = "https://elix-jp.sakura.ne.jp/api/usage.php"
 
 def append_sinPulse(_audio, _sample_rate=16000, _pulse_hz=1200, _pulseNum=1, _volume=0.5):
     per_samples = _sample_rate / _pulse_hz
@@ -136,7 +136,7 @@ def debug_disp_bytes(_data:bytes, _audio, _sample_rate=16000, _pulse_hz=1200, _v
         bstr += "11"
         print(bstr)
 
-def bin_to_wav(_bindata:bytes, _filename, _sample_rate, _volume):
+def bin_to_wav(_bindata:bytes, _filename="output", _sample_rate=16000, _volume=0.5):
     _audio = []
     #http://ngs.no.coocan.jp/doc/wiki.cgi/TechHan?page=2%BE%CF+%A5%AB%A5%BB%A5%C3%A5%C8%8E%A5%A5%A4%A5%F3%A5%BF%A1%BC%A5%D5%A5%A7%A5%A4%A5%B9
     _audio = append_sinPulse(_audio, _sample_rate,2400,16000,_volume) # long header 16000 -> 8000
@@ -153,7 +153,7 @@ def bin_to_wav(_bindata:bytes, _filename, _sample_rate, _volume):
 # waveform).  If you were working with a very long sound you'd want to stream this to
 # disk instead of buffering it all in memory list this.  But most sounds will fit in 
 # memory.
-sample_rate = 16000.0
+sample_rate = 16000
 filename = "testprog" # filename.cas -> filename.wav
 volume = 0.5
 
