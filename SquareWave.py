@@ -50,7 +50,7 @@ class TextToWav():
 
         return _audio
 
-    def save_wav(self, _audio, _filename, _callback):
+    def save_wav(self, _audio, _filename, _callback=None):
         # Open up a wav file
         wav_file=wave.open(_filename,"w")
 
@@ -75,9 +75,10 @@ class TextToWav():
             wav_file.writeframesraw(struct.pack('h', int( sample * 32767.0 )))
 
         wav_file.close()
-        return _callback()
 
-    def bin_to_wav(self, _bindata:bytes,_filename,_callback):
+        return None if _callback==None else _callback()
+
+    def bin_to_wav(self, _bindata:bytes,_filename,_callback=None):
         self.audio = []
         #http://ngs.no.coocan.jp/doc/wiki.cgi/TechHan?page=2%BE%CF+%A5%AB%A5%BB%A5%C3%A5%C8%8E%A5%A5%A4%A5%F3%A5%BF%A1%BC%A5%D5%A5%A7%A5%A4%A5%B9
 
@@ -91,9 +92,37 @@ class TextToWav():
 
         return self.save_wav(self.audio,_filename+".wav",_callback)
 
-    def text_to_wav(self, _text:str, _filename,_callback):
+    def text_to_wav(self, _text:str, _filename,_callback=None):
         bindata = _text.encode()
         return self.bin_to_wav(bindata, _filename,_callback)
+
+    def debug_disp_bindata(self,_bindata):
+        print("--------------------------------------------------------------------")
+        print (_bindata)
+        print("--------------------------------------------------------------------")
+
+        datCnt=0
+        for data in _bindata:
+            print(data,)
+            datCnt+=1
+            if(datCnt>20):
+                break
+
+    def debug_disp_bytes(self,_data:bytes, _max_bytes=100000):
+        if(_max_bytes<=0):
+            _max_bytes = len(_data)
+        else:
+            _max_bytes = min(_max_bytes,len(_data))
+            
+        for idx in range(_max_bytes):
+            bstr="0"
+            for b in range(8):
+                onbit = ((_data[idx]>>b)&1)+1 # off=1,on=2
+                bstr += str(onbit-1)
+
+            bstr += "11"
+            print(bstr)
+
 
 import urllib.request
 from html.parser import HTMLParser
@@ -108,66 +137,27 @@ class MyHTMLParser(HTMLParser):
         #print("Encountered some data  :", data)
 
 
-def get_utf8str_from_url(_url):
+def get_htmlstr_from_url(_url):
     req = urllib.request.Request(_url)
     with urllib.request.urlopen(req) as res:
         body = res.read()
     #print(res.status)
 
-    _utf8str="?"
+    _htmlstr="?"
     try:
-        _utf8str=body.decode('utf-8')
+        _htmlstr=body.decode('utf-8')
     except UnicodeDecodeError:
         pass
-    return _utf8str
+    return _htmlstr
 
-def utf8str_to_bindata(_utf8str):
+def htmlstr_to_planestr(_htmlstr):
     parser = MyHTMLParser()
-    parser.feed(_utf8str)
-
-    _bindata = parser.planeText.encode()
-
-    return _bindata
-
-def debug_disp_bindata(_bindata):
-    print("--------------------------------------------------------------------")
-    print (_bindata)
-    print("--------------------------------------------------------------------")
-
-    datCnt=0
-    for data in _bindata:
-        print(data,)
-        datCnt+=1
-        if(datCnt>20):
-            break
-
-def debug_disp_bytes(_data:bytes, _max_bytes=100000):
-    if(_max_bytes<=0):
-        _max_bytes = len(_data)
-    else:
-        _max_bytes = min(_max_bytes,len(_data))
-        
-    for idx in range(_max_bytes):
-        bstr="0"
-        for b in range(8):
-            onbit = ((_data[idx]>>b)&1)+1 # off=1,on=2
-            bstr += str(onbit-1)
-
-        bstr += "11"
-        print(bstr)
+    parser.feed(_htmlstr)
+    return parser.planeText
 
 def finished():
     print("FINISHED!")
     
-def bin_to_wav(_bindata:bytes, _filename="output", _sample_rate=16000, _volume=0.5):
-    t2w = TextToWav(samplerate=16000, volume=0.5)
-    return t2w.bin_to_wav(_bindata,_filename,finished)
-
-def text_to_wav(_text:str, _filename="output", _sample_rate=16000, _volume=0.5):
-    bindata = _text.encode()
-    return bin_to_wav(bindata, _filename, _sample_rate, _volume,finished)
-
-
 # Audio will contain a long list of samples (i.e. floating point numbers describing the
 # waveform).  If you were working with a very long sound you'd want to stream this to
 # disk instead of buffering it all in memory list this.  But most sounds will fit in 
@@ -182,13 +172,22 @@ def_url = "http://www.gutenberg.org/files/55/55.txt"
 
 
 filename = "testprog" # filename.cas -> filename.wav
-sample_rate = 16000
-volume = 0.5
 
-utf8str = get_utf8str_from_url(def_url)
-bindata = utf8str_to_bindata(utf8str)
+htmlstr = get_htmlstr_from_url(def_url)
+planestr = htmlstr_to_planestr(htmlstr)
+
+t2w = TextToWav(samplerate=16000, volume=0.5)
 
 print("saving ",filename+".wav")
-bin_to_wav(bindata,filename,sample_rate,volume)
-#text_to_wav('hello world! hello world! hello world! hello world! ',filename,sample_rate,volume)
+
+#t2w.text_to_wav(planestr, filename, finished)
+
+bindata = planestr.encode()
+
+#t2w.debug_disp_bindata(bindata)
+#t2w.debug_disp_bytes(bindata)
+
+t2w.bin_to_wav(bindata,filename,finished)
+
+
 print("save complete.")
