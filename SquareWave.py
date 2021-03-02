@@ -50,7 +50,7 @@ class TextToWav():
 
         return _audio
 
-    def save_wav(self, _audio, _filename):
+    def save_wav(self, _audio, _filename, _callback):
         # Open up a wav file
         wav_file=wave.open(_filename,"w")
 
@@ -75,9 +75,9 @@ class TextToWav():
             wav_file.writeframesraw(struct.pack('h', int( sample * 32767.0 )))
 
         wav_file.close()
-        return wav_file
+        return _callback()
 
-    def bin_to_wav(self, _bindata:bytes,_filename):
+    def bin_to_wav(self, _bindata:bytes,_filename,_callback):
         self.audio = []
         #http://ngs.no.coocan.jp/doc/wiki.cgi/TechHan?page=2%BE%CF+%A5%AB%A5%BB%A5%C3%A5%C8%8E%A5%A5%A4%A5%F3%A5%BF%A1%BC%A5%D5%A5%A7%A5%A4%A5%B9
 
@@ -89,11 +89,11 @@ class TextToWav():
         self.audio = self.append_bytes_to_tone(self.audio, _bindata,10000) # data body
         self.audio = self.append_sinPulse(self.audio, 0, 7) # end of data
 
-        return self.save_wav(self.audio,_filename+".wav")
+        return self.save_wav(self.audio,_filename+".wav",_callback)
 
-    def text_to_wav(self, _text:str, _filename="output"):
+    def text_to_wav(self, _text:str, _filename,_callback):
         bindata = _text.encode()
-        return self.bin_to_wav(bindata, _filename)
+        return self.bin_to_wav(bindata, _filename,_callback)
 
 import urllib.request
 from html.parser import HTMLParser
@@ -156,13 +156,16 @@ def debug_disp_bytes(_data:bytes, _max_bytes=100000):
         bstr += "11"
         print(bstr)
 
+def finished():
+    print("FINISHED!")
+    
 def bin_to_wav(_bindata:bytes, _filename="output", _sample_rate=16000, _volume=0.5):
     t2w = TextToWav(samplerate=16000, volume=0.5)
-    return t2w.bin_to_wav(_bindata,_filename)
+    return t2w.bin_to_wav(_bindata,_filename,finished)
 
 def text_to_wav(_text:str, _filename="output", _sample_rate=16000, _volume=0.5):
     bindata = _text.encode()
-    return bin_to_wav(bindata, _filename, _sample_rate, _volume)
+    return bin_to_wav(bindata, _filename, _sample_rate, _volume,finished)
 
 
 # Audio will contain a long list of samples (i.e. floating point numbers describing the
