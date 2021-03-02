@@ -1,7 +1,7 @@
 # Python_SquareWave
-is a sample that changes from text (or binaly) to wav for data recorder.
-this format looks similar MSX CASETTE IO but no MSX format.
-MSX format using pivot language instead of plane text.
+is a sample that converts data from text (or binaly) to wav audio for data recorder.
+this format similar MSX CASETTE format but no it.
+MSX format is using pivot language from basic interpreter instead of plane text.
 
 In other words, this is only joke app.
 
